@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<!-- Google tag (gtag.js) -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-H13EFXBPKL"></script>
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag() { dataLayer.push(arguments); }
+		gtag('js', new Date());
+
+		gtag('config', 'G-H13EFXBPKL');
+	</script>
+	<!-- Google Tag Manager -->
+	<script>(function (w, d, s, l, i) {
+			w[l] = w[l] || []; w[l].push({
+				'gtm.start':
+					new Date().getTime(), event: 'gtm.js'
+			}); var f = d.getElementsByTagName(s)[0],
+				j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src =
+					'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
+		})(window, document, 'script', 'dataLayer', 'GTM-WJ5WD2NX');</script>
+	<!-- End Google Tag Manager -->
+
+	<!-- Metadata 2024 -->
+	<meta charset="utf-8">
+	<title>Housing Study</title>
+	<meta name="description" content="Explore the Muskogee Comprehensive Housing Study.">
+	<meta name="keywords" content="Muskogee, Oklahoma, Housing, Urban Planning, CommunityScale, Assessment, Dashboard">
+	<meta name="author" content="CommunityScale">
+	<link rel="canonical" href="https://communityscale.github.io/Muskogee/">
+	<meta property="og:title" content="Muskogee Comprehensive Housing Study">
+	<meta property="og:type" content="article">
+	<meta property="og:url" content="https://communityscale.github.io/Muskogee/">
+	<meta property="og:image" content="https://raw.githubusercontent.com/CommunityScale/Muskogee/main/images/socialcard.jpg">
+	<meta property="og:description" content="Housing Study educational dashboard for the Muskogee Comprehensive Housing Study. Provides detailed analysis and insights on housing trends, affordability, and needs.">
+	<meta property="og:site_name" content="CommunityScale">
+	<meta property="og:locale" content="en_US">
+	<meta property="article:author" content="CommunityScale">
+	<meta property="article:tag" content="Urban Planning">
+	<meta property="article:tag" content="Housing">
+	<meta property="article:tag" content="Explore the Muskogee Comprehensive Housing Study">
+	<meta name="twitter:card" content="summary_large_image">
+	<meta name="twitter:title" content="Explore the Muskogee Comprehensive Housing Study">
+	<meta name="twitter:description" content="Explore the Muskogee Comprehensive Housing Study.">
+	<meta name="twitter:image" content="https://raw.githubusercontent.com/CommunityScale/Muskogee/main/images/socialcard.jpg">
+	<meta name="twitter:creator" content="@CommunityScale">
+	<meta http-equiv="content-language" content="en">
+
+	<!-- Mobile Specific Metas
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<!-- CSS
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+	<link rel="stylesheet" href="css/normalize.css">
+	<link rel="stylesheet" href="css/cs-template.css">
+
+	<!-- Fonts / icons / table
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Gloock:wght@100..900&family=Roboto:ital,wght@0,100..900;1,100..900&family=Roboto+Condensed:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+	<script src="https://kit.fontawesome.com/b6b458829a.js" crossorigin="anonymous"></script>
+	<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+	<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+
+
+	<!-- Favicon
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+	<link rel="icon" type="image/png" href="images/favicon.png">
+
+</head>
+
+<body>
+	<!-- Google Tag Manager (noscript) -->
+	<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WJ5WD2NX" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+	<!-- End Google Tag Manager (noscript) -->
+
+	<script>
+		function openImagePopup(url) {
+		  window.open(
+			url,
+			'popupImage',
+			'width=800,height=600,resizable=yes,scrollbars=yes'
+		  );
+		}
+	</script>
+
+	<!-- Primary Page Layout
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+
+	<!-- Sticky header -->
+	<div class="sticky">
+		<div class="topnav">
+			<div class="logo-and-menu">
+				<p class="inline-text">
+					<img src="images/client/client-logo.png" alt="City of Muskogee" class="inline-logo">
+					<span class="title"><b>Comprehensive Housing Study</b></span>
+				</p>
+				<div class="nav-options">
+					<div class="desktop-pages">
+						<!-- Links must be added here for desktop -->
+						<a href="#Top"><span class="fa fa-arrow-up"></span> Top</a>
+						<a href="#Overview">Overview </a>
+						<a href="#Findings">Key indicators </a>
+						<a href="#Strategies">Strategies</a>
+					</div>
+					<div id="clickDiv" class="mobile-menu-icon">
+						<a class="menu-icon">
+							<i class="fa fa-bars"></i>
+						</a>
+					</div>
+				</div>
+
+			</div>
+			<div id="targetDiv" class="">
+				<!-- Links must be added here again for mobile -->
+				<a href="#Top"><span class="fa fa-arrow-up"></span> Top</a>
+				<a href="#Overview">Overview </a>
+				<a href="#Findings">Key indicators </a>
+				<a href="#Strategies">Strategies</a>
+			</div>
+		</div>
+	</div>
+
+	<!-- Cover banner -->
+	<div class="cover" id="Top" style="background:linear-gradient(to right,rgb(42,58,81,.8) 60%,rgba(42,58,81,.5)), url(images/client/cover-background.png) no-repeat center center; background-size: cover;">
+		<div class="container" style="margin-top: 0">
+			<h1>City of Muskogee 
+				<br><span style="font-weight: normal;">Comprehensive Housing Study</span></h1>
+		<div class="row">
+			<div class="eight columns" style="margin-top: 2%;">
+				<p>This dashboard supports the City of Muskogee's Comprehensive Housing Study, conducted by <a href="https://communityscale.io/" target="_blank" rel="noopener noreferrer">CommunityScale</a> on behalf of the City's <a href="https://www.muskogeeonline.org/departments/economic-development/index.php" target="_blank" rel="noopener noreferrer">Economic Development Department</a>.</p>
+				<div class="chip-container">
+					<a href="#Overview"><button class="button-primary">Purpose of this plan</button></a>
+						<a href="#Findings"><button class="button-primary">Key indicators from the analysis</button></a>
+						<a href="#Production"><button class="button-primary">Housing production target</button></a>
+						<a href="#Strategies"><button class="button-primary">Draft strategies from the plan</button></a>
+						<!--
+					<a href="survey.html"><button class="button-primary"><span class="fa fa-user"></span>Take the housing survey</button></a>
+					-->
+				</div>
+			</div>
+		</div>
+	</div>
+	</div>
+
+	<!-- 
+╭────────────────────────╮
+|    OVERVIEW            |
+╰────────────────────────╯
+-->
+
+
+	<div class="divider" id="Vision" style="margin-top: 0%; padding-top: 0; margin-bottom: 0%; padding-bottom: 0;">
+		<div class="container" style="margin-bottom: 0%; padding-bottom: 0;">
+			
+			<div class="row insight-box" id="Map">
+				<!-- Heading Row -->
+				<div class="twelve columns" style="margin-bottom: 0%;">
+					<h3>Eastside Economic Mobility District interactive map</h3>
+					<p>The map below provides interactive data layers to support this study. Layers will be added as they are developed during the process. <a href="indyEastMaps.html" target="_blank" >Open in a new window.</a></p>
+				</div>
+				<!-- Main Content Row -->
+				<div class="twelve columns" style="margin-top: 2%; margin-left: 0;">
+					<iframe src="indyEastMaps.html" width="100%" height="600px" scrolling="no" style="border: none; overflow-x: hidden; overflow-y: auto;"></iframe>
+				</div>
+			</div>
+
+		</div>
+	</div>
+
+
+	<!-- 
+╭────────────────────────╮
+|    Footer              |
+╰────────────────────────╯
+–––––––––––––––––––––––––––––––––––––––––––––––––– -->
+
+	<div class="footer" style="background:linear-gradient(to right,white 80%,rgba(34, 124, 157,.1));">
+		<div class="container">
+			<div class="unresponsive" style="margin-bottom: 30px;">
+				<div class="content-size"><a href="https://intendindiana.org/"><img class="no-rounded-edges" src="./images/client/client-logo.jpg" height="30px" width="auto" title="Intend Indiana" alt="Intend Indiana"></a></div>
+				<div class="fill-space">
+					<p><a href="https://www.muskogeeonline.org/departments/economic-development/index.php" target="_blank">The City of Muskogee</a> Welcome to Muskogee, where opportunity meets community. Located at the crossroads of major highways and rail lines, Muskogee offers a prime location for businesses looking to expand or relocate. Muskogee is known for its affordable cost of living, excellent schools, and a thriving cultural scene that blends history, music, and outdoor recreation. Whether you're an entrepreneur, a skilled worker, or someone looking to invest in a promising community, Muskogee is the place to grow, live, and thrive.</p>
+				</div>
+			</div>
+			<div class="unresponsive">
+				<div class="content-size"><a href="http://communityscale.io"><img class="no-rounded-edges" src="./images/CommunityScale-logo.png" height="auto" width="30px" title="CommunityScale" alt="CommunityScale"></a></div>
+				<div class="fill-space">
+					<p><a href="http://communityscale.io" target="blank">CommunityScale</a> is a pioneering urban planning and spatial data analysis company serving clients across the United States. Follow us on <a href="https://www.linkedin.com/company/communityscale">LinkedIn</a> and <a href="https://twitter.com/CommunityScale">X</a>.</p>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script type="text/javascript" src="nav-javascript.js"></script>
+
+	<!-- End Document
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+</body>
+
+</html>

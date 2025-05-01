@@ -1,0 +1,1034 @@
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>Indy East Mapping</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<link
+  href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css"
+  rel="stylesheet">
+
+<link 
+    href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" 
+    rel="stylesheet">
+
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script> 
+    <script src="https://unpkg.com/@turf/turf@^7/turf.min.js"></script> 
+
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+        }
+
+        #map {
+            width: 100%;
+            flex-shrink: 1;
+            height: 100%;
+        }
+
+       .mapboxgl-popup {
+            width: 175px;
+            font: 12px/20px 'Roboto', sans-serif;
+            background-color: #425A70;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 9999;
+            display: block;
+            padding: 0;
+            margin: 0;
+        }
+
+        .mapboxgl-popup .mapboxgl-popup-tip {
+            display: none;
+        }
+
+        .mapboxgl-popup-close-button {
+            top: 2px; 
+            right: 4px; 
+            width: 7px;
+            height: 7px;
+            color: #fff; 
+        }
+
+        .mapboxgl-popup-header {
+            margin: 0px;
+            font-size: 16px;
+            color: #fff;
+            font-weight: bold;
+            padding: 5px;
+        }
+    
+        .mapboxgl-popup-content {
+            font-size: 12px;
+            color: #425A70;
+            margin-left: 0px;
+            padding: 8px;
+            background-color: #fff;
+            line-height: 1.25;
+        }
+
+        #container  {
+           display: flex;
+           height: 100%;
+           width: 100%;
+           position: relative;
+        }
+
+        #layer-dropdown {
+            width: auto;
+            font-size: 16px;
+            padding: 8px;
+            margin: 10px 0;
+            z-index: 10;
+            background-color: #f2f0ef;
+            position: absolute;
+            top: 25px;
+            left: 30px;
+            font: 'Roboto', sans-serif;
+            font-size: 14px;
+            display: flex;
+            flex-shrink: 1;
+            border-radius: 2;
+            opacity: 0.95;
+            border: #80808090;
+        }
+
+        .legend {
+            background-color: #fff;
+            border-radius: 4px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            font: 14px/24px 'Roboto', sans-serif;
+            padding: 10px;
+            position: absolute;
+            right: 30px;
+            bottom: 50px;
+            width: 180px;
+            flex-shrink: 1;
+            text-wrap: balance;
+            z-index: 11;
+            line-height: 18px;
+        }
+ 
+        .legend h4 {
+            margin: 0 0 10px;
+            font: 'Roboto', sans-serif;
+        }
+ 
+        .legend div span {
+            display: inline-block;
+            height: 20px;
+            margin-right: 5px;
+            width: 20px;
+            background-color: white;
+            vertical-align: middle;
+            padding-bottom: 0;
+            text-wrap: nowrap;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="container">
+        <select id="layer-dropdown">
+            <option value="tracts-medIncome">Median Annual Household Income</option> 
+            <option value="tracts-pctChIncome">Percent Change in Median Income (2015-2023)</option>  
+            <option value="tracts-pctCostBurdenedRenters">Percent of Renters, Cost Burdened</option> 
+            <option value="tracts-pctCostBurdenedOwners">Percent of Homeowners, Cost Burdened</option> 
+            <option value="tracts-pctHH">Percent Change in Households (2010-2023)</option>
+            <option value="parcels-landuse">Land Use by Parcel</option> 
+            <option value="parcels-pctLV">Land Value as Percent of Assessed Value</option>
+            <option value="tracts-layer">Marion County</option>
+        </select>
+        <div id="medIncomeLegend" class="legend" style="display: block;">
+            <h4>Median Annual Household Income (2023, USD)</h4>
+            <div><span style="background-color: #980043"></span>$97,000 or more</div>
+            <div><span style="background-color: #dd1c77"></span></div>
+            <div><span style="background-color: #df65b0"></span></div>
+            <div><span style="background-color: #d7b5d8"></span></div>
+            <div><span style="background-color: #f1eef6"></span>$22,000 or less</div>
+            <div><span style="background-color: #425A7030"></span>No data</div>
+        </div>
+        <div id="pctIncomeChLegend" class="legend" style="display: none;">
+            <h4>Percent Change in Median Income (2015-2023)</h4> 
+            <div><span style="background-color: #006d2c"></span>100%+</div>
+            <div><span style="background-color: #2ca25f"></span></div>
+            <div><span style="background-color: #66c2a4"></span>50%</div>
+            <div><span style="background-color: #b2e2e2"></span></div>
+            <div><span style="background-color: #edf8fb"></span>0% or negative growth</div>
+            <div><span style="background-color: #425A7030"></span>No data</div>
+        </div>
+        <div id="cbRentersLegend" class="legend" style="display: none;">
+            <h4>Cost Burdened Renters (2023)</h4>
+            <div><span style="background-color: #016c59"></span>70%+</div>
+            <div><span style="background-color: #1c9099"></span></div>
+            <div><span style="background-color: #67a9cf"></span>30%</div>
+            <div><span style="background-color: #bdc9e1"></span></div>
+            <div><span style="background-color: #f6eff7"></span>0%</div>
+            <div><span style="background-color: #425A7030"></span>No data</div>
+        </div>
+        <div id="cbOwnersLegend" class="legend" style="display: none;">
+            <h4>Cost Burdened Homeowners (2023)</h4>
+            <div><span style="background-color: #810f7c"></span>35%+</div>
+            <div><span style="background-color: #8856a7"></span></div>
+            <div><span style="background-color: #8c96c6"></span>17%</div>
+            <div><span style="background-color: #b3cde3"></span></div>
+            <div><span style="background-color: #edf8fb"></span>0%</div>
+            <div><span style="background-color: #425A7030"></span>No data</div>
+        </div>
+        <div id="pctHHLegend" class="legend" style="display: none;">
+            <h4>Percent Change in Households (2010-2023)</h4>
+            <div><span style="background-color: #1b7837"></span>50%+</div>
+            <div><span style="background-color: #7fbf7b"></span></div>
+            <div><span style="background-color: #d9f0d3"></span></div>
+            <div><span style="background-color: #f7f7f7"></span>0%</div>
+            <div><span style="background-color: #e7d4e8"></span></div>
+            <div><span style="background-color: #af8dc3"></span></div>
+            <div><span style="background-color: #762a83"></span>-20%+</div>
+            <div><span style="background-color: #425A7030"></span>No data</div>
+        </div>
+        <div id="landUseLegend" class="legend" style="display: none;"> 
+            <h4>Land Use</h4>
+            <div><span style="background-color: #fff8bf"></span>Low density residential</div>
+            <div><span style="background-color: #ffd489"></span>Middle density residential</div>
+            <div><span style="background-color: #ffa734"></span>High density residential</div>
+            <div><span style="background-color: #f8c0c0"></span>Office</div>
+            <div><span style="background-color: #da6262"></span>Community commercial</div>
+            <div><span style="background-color: #c91212"></span>Heavy commercial</div>
+            <div><span style="background-color: #d899dd"></span>Mixed use</div>
+            <div><span style="background-color: #7e3185"></span>Downtown mixed use</div>
+            <div><span style="background-color: #928efa"></span>Utilities</div>
+            <div><span style="background-color: #6663a8"></span>Light industrial</div>
+            <div><span style="background-color: #323052"></span>Heavy industrial</div>
+            <div><span style="background-color: #8ac1eb"></span>Education and medicine</div>
+            <div><span style="background-color: #5db0f0"></span>Place of worship</div>
+            <div><span style="background-color: #058ef7"></span>Other community use</div>
+            <div><span style="background-color: #24910a"></span>Agriculture</div>
+            <div><span style="background-color: #d4f088"></span>Park</div>
+            <div><span style="background-color: #a3e2f0"></span>Major body of water</div>
+            <div><span style="background-color: #6d939c"></span>Floodway</div>
+            <div><span style="background-color: #909191"></span>Right of way</div>
+            <div><span style="background-color: #5d5e5e"></span>Airport</div>
+            <div><span style="background-color: #282929"></span>Parking</div>
+            <div><span style="background-color: #f3762a"></span>Under development</div>
+            <div><span style="background-color: #fff"></span>Vacant or unknown</div>
+        </div>
+        <div id="pctLVLegend" class="legend" style="display: none;">
+            <h4>Land Value as Percent of Assessed Value</h4>
+            <div><span style="background-color: #045a8d"></span>3% or less</div>
+            <div><span style="background-color: #2b8cbe"></span></div>
+            <div><span style="background-color: #74a9cf"></span>35%</div>
+            <div><span style="background-color: #bdc9e1"></span></div>
+            <div><span style="background-color: #f1eef6"></span>90% or more</div>
+        </div>
+    <div id="map"></div>
+</div>
+
+<script>
+    const INITIAL_LOC = [-86.14, 39.78] //center on what's just east of Downtown Indy
+    const INITIAL_ZOOM = 12 //set initial zoom (zoom levels 9-12 best for cities depending on size)
+    const communityScaleGray = "#425A70" //could replace with different accent color, I personally like this branding 
+    const placeOfInterest = "IndyEastEMZB"
+    const medIncomePalette = [ //Sequential colorBrewer Purple/Red ramp
+                '#f1eef6',
+                '#d7b5d8',
+                '#df65b0',
+                '#dd1c77',
+                '#980043'
+            ]
+    const cbRentersPalette = [ //Sequential colorBrewer GrnBlu ramp
+                '#f6eff7',
+                '#bdc9e1',
+                '#67a9cf',
+                '#1c9099',
+                '#016c59'
+            ]
+    const cbOwnersPalette = [ //Sequential colorBrewer BluPur ramp
+                '#edf8fb',
+                '#b3cde3',
+                '#8c96c6',
+                '#8856a7',
+                '#810f7c'
+            ]
+    const hhChangePalette = [ //Diverging colorBrewer PurGre ramp
+                '#762a83',
+                '#af8dc3',
+                '#e7d4e8',
+                '#f7f7f7',
+                '#d9f0d3',
+                '#7fbf7b',
+                '#1b7837'
+            ]
+    const landUsePalette = [
+                "#fff8bf", //Low density residential
+                "#ffd489", //Middle density residential
+                "#ffa734", //High density residential
+                "#f8c0c0", //Office
+                "#da6262", //Community commercial
+                "#c91212", //Heavy commercial
+                "#d899dd", //Mixed use
+                "#7e3185", //Downtown mixed use
+                "#928efa", //Utilities
+                "#6663a8", //Light industrial
+                "#323052", //Heavy industrial
+                "#8ac1eb", //Education and medicine
+                "#5db0f0", //Place of worship
+                "#058ef7", //Other community use
+                "#24910a", //Agriculture
+                "#d4f088", //Park
+                "#a3e2f0", //Major body of water
+                "#6d939c", //Floodway
+                "#909191", //Right of way
+                "#5d5e5e", //Airport
+                "#282929", //Parking
+                "f3762a", //Under development
+                "#fff" //Vacant + unknown
+            ]
+
+    const landValuePalette = [ //sequential ColorBrewer Blu ramp
+                '#f1eef6',
+                '#bdc9e1',
+                '#74a9cf',
+                '#2b8cbe',
+                '#045a8d'
+            ]
+
+    const neighborhoodConditionsPalette = [ //custom colors for neighborhood conditions
+                "#8FAB40", //DCQ
+                "#CCE677", //DKU
+                "#EDFDC5", //DNI
+                "#8A8A8A", //OKCQ
+                "#D1D0CD", //OKKU
+                "#F0EFEB", //OKNI
+                "#333FA3", //HDCQ
+                "#838AE3", //HDKU
+                "#D4D7FB"  //HDNI
+            ]
+    const pctIncomeChPalette = [ //sequential ColorBrewer Grn ramp
+                '#edf8fb',
+                '#b2e2e2',
+                '#66c2a4',
+                '#2ca25f',
+                '#006d2c'
+            ]
+ 
+
+    mapboxgl.accessToken = 'pk.eyJ1IjoiZW10em90MDEiLCJhIjoiY20zZ2kyd3RpMDRnajJscHoyMG5neGJldyJ9.poXi4pgd2CoXKV2B4kg1Cw ';
+    const map = new mapboxgl.Map({
+        container: 'map', 
+        style: 'mapbox://styles/emtzot01/cm6a8mjb5004g01qrd7cv07mq', 
+        center: INITIAL_LOC, 
+        zoom: INITIAL_ZOOM 
+    });
+
+    function adjustMapSize() {
+        const sidebarWidth = document.getElementById('sidebar').width;
+        const mapContainer = document.getElementById('map');
+  
+        mapContainer.style.marginLeft = `${sidebarWidth}px`;
+        map.resize(); 
+        }
+
+
+
+    map.on("load", () => {      
+        map.addSource("tracts", {    
+            type: "geojson",
+            data: "https://raw.githubusercontent.com/emtzot/mapSources/refs/heads/main/marionCountyTracts.geojson",
+            promoteId: "GEOID"
+        })
+
+        map.addSource("parcels", {    
+            type: "geojson",
+            data: "https://raw.githubusercontent.com/emtzot/mapSources/main/emzbParcels.geojson",
+            promoteId: "PARCEL_C"
+        })
+
+        map.addSource("emzBoundary", {    
+            type: "geojson",
+            data: "https://raw.githubusercontent.com/emtzot/mapSources/refs/heads/main/indyEastEMZB.geojson"
+        })
+
+        map.addLayer({
+                id: "tracts-layer",  
+                type: "fill",
+                source: "tracts",
+                paint: {
+                    'fill-color': communityScaleGray,
+                    "fill-opacity": 0.6,
+                    "fill-outline-color": "white",
+                    "fill-outline-width": 1,
+                    "fill-opacity": [
+                        "case",
+                        ["boolean", ["feature-state", "hover"], false],
+                        0.95,
+                        0.6
+                ]},
+                layout: {
+                    visibility: "none"
+                }
+            },"road-label", 
+            "settlement-major-label", 
+            "settlement-subdivision-label", 
+            "settlement-minor-label"
+        )
+
+        map.addLayer({
+            id: "tracts-medIncome",  
+            type: "fill",
+            source: "tracts",
+            paint: {
+                "fill-color": [
+                    "case", ["==", ["get", "medIncome"], null], communityScaleGray,
+                    ["interpolate", 
+                    ["linear"],
+                    ["get", "medIncome"],
+                    22000,
+                    medIncomePalette[0], 
+                    40500,
+                    medIncomePalette[1],
+                    59000,
+                    medIncomePalette[2],
+                    78000,
+                    medIncomePalette[3],
+                    97000,
+                    medIncomePalette[4]]],
+                "fill-outline-color": "white",
+                "fill-opacity": [
+                    "case", ["==", ["get", "medIncome"], null], 0.3,
+                    ["case",
+                    ["boolean", ["feature-state", "hover"], false],
+                    0.95,
+                    0.6
+            ]]
+             },
+             layout: {
+                visibility: "visible"
+             }
+        },"road-label", 
+        "settlement-major-label", 
+        "settlement-subdivision-label", 
+        "settlement-minor-label"
+    ) 
+
+    map.addLayer({
+            id: "tracts-pctChIncome",  
+            type: "fill",
+            source: "tracts",
+            paint: {
+                "fill-color": [
+                    "case", ["==", ["get", "pctChInfIn"], null], communityScaleGray,
+                    ["interpolate", 
+                    ["linear"],
+                    ["get", "pctChInfIn"],
+                    0,
+                    pctIncomeChPalette[0], 
+                    0.3,
+                    pctIncomeChPalette[1],
+                    0.5,
+                    pctIncomeChPalette[2],
+                    0.78,
+                    pctIncomeChPalette[3],
+                    1,
+                    pctIncomeChPalette[4]]],
+                "fill-outline-color": "white",
+                "fill-opacity": [
+                    "case", ["==", ["get", "pctChInfIn"], null], 0.3,
+                    ["case",
+                    ["boolean", ["feature-state", "hover"], false],
+                    0.95,
+                    0.6
+            ]]
+             },
+             layout: {
+                visibility: "none"
+             }
+        },"road-label", 
+        "settlement-major-label", 
+        "settlement-subdivision-label", 
+        "settlement-minor-label"
+    )
+
+    map.addLayer({      
+            id: "tracts-pctCostBurdenedRenters",  
+            type: "fill",
+            source: "tracts",
+            paint: {
+                "fill-color": [
+                    "case", ["==", ["get", "cbRent"], null], communityScaleGray,
+                    ["interpolate", 
+                    ["linear"],
+                    ["get", "cbRent"],
+                    0,
+                    cbRentersPalette[0], 
+                    0.33,
+                    cbRentersPalette[1],
+                    0.44,
+                    cbRentersPalette[2],
+                    0.55,
+                    cbRentersPalette[3],
+                    0.70,
+                    cbRentersPalette[4]]],
+                "fill-outline-color": "white",
+                "fill-opacity": [
+                    "case", ["==", ["get", "cbRent"], null], 0.3,
+                    ["case",
+                    ["boolean", ["feature-state", "hover"], false],
+                    0.95,
+                    0.6
+            ]]
+             },
+             layout: {
+                visibility: "none"
+             }
+        },"road-label", 
+        "settlement-major-label", 
+        "settlement-subdivision-label", 
+        "settlement-minor-label"
+    )
+    
+
+    map.addLayer({      
+            id: "tracts-pctCostBurdenedOwners",  
+            type: "fill",
+            source: "tracts",
+            paint: {
+                "fill-color": [
+                    "case", ["==", ["get", "cbOwn"], null], communityScaleGray,
+                    ["interpolate",
+                    ["linear"],
+                    ["get", "cbOwn"],
+                    0,
+                    cbOwnersPalette[0],
+                    0.11,
+                    cbOwnersPalette[1], 
+                    0.17,
+                    cbOwnersPalette[2],
+                    0.23,
+                    cbOwnersPalette[3],
+                    0.35,
+                    cbOwnersPalette[4],
+                ]],
+                "fill-outline-color": "white",
+                "fill-opacity": [
+                    "case", ["==", ["get", "cbOwn"], null], 0.3,
+                    ["case",
+                    ["boolean", ["feature-state", "hover"], false],
+                    0.95,
+                    0.6
+            ]]
+             },
+             layout: {
+                visibility: "none"
+             }
+        },"road-label", 
+        "settlement-major-label", 
+        "settlement-subdivision-label", 
+        "settlement-minor-label"
+    )
+
+
+    map.addLayer({     
+            id: "tracts-pctHH",  
+            type: "fill",
+            source: "tracts",
+            paint: {
+                "fill-color": [
+                    "case", ["==", ["get", "pctChHH"], null], communityScaleGray,
+                    ["interpolate",
+                    ["linear"],
+                    ["get", "pctChHH"],
+                    -0.20,
+                    hhChangePalette[0],
+                    -0.13, 
+                    hhChangePalette[1],
+                    -0.05,
+                    hhChangePalette[2],
+                    0,
+                    hhChangePalette[3], 
+                    0.13,
+                    hhChangePalette[4],
+                    0.22,
+                    hhChangePalette[5],
+                    0.5,
+                    hhChangePalette[6]
+                ]],
+                "fill-outline-color": "white",
+                "fill-opacity": [
+                    "case", ["==", ["get", "pctChHH"], null], 0.3,
+                    ["case",
+                    ["boolean", ["feature-state", "hover"], false],
+                    0.95,
+                    0.6
+            ]]
+             },
+             layout: {
+                visibility: "none"
+             }
+        },"road-label", 
+        "settlement-major-label", 
+        "settlement-subdivision-label", 
+        "settlement-minor-label"
+    )
+
+    map.addLayer({ 
+            id: "parcels-landuse",  
+            type: "fill",
+            source: "parcels",
+            paint: {
+                "fill-color": {
+                    "property": "USE14_CODE",
+                    "stops": [
+                        ['11', landUsePalette[0]],
+                        ['12', landUsePalette[0]],
+                        ['13', landUsePalette[0]],
+                        ['14', landUsePalette[0]],
+                        ['15', landUsePalette[0]],
+                        ['16', landUsePalette[1]],
+                        ['17', landUsePalette[1]],
+                        ['18', landUsePalette[1]],
+                        ['19', landUsePalette[2]],
+                        ['20', landUsePalette[2]],
+                        ['21', landUsePalette[3]],
+                        ['22', landUsePalette[4]],
+                        ['23', landUsePalette[5]],
+                        ['24', landUsePalette[6]],
+                        ['25', landUsePalette[7]],
+                        ['26', landUsePalette[20]], 
+                        ['30', landUsePalette[22]], 
+                        ['31', landUsePalette[14]], 
+                        ['41', landUsePalette[9]],
+                        ['42', landUsePalette[10]],
+                        ['51', landUsePalette[11]],
+                        ['52', landUsePalette[11]],
+                        ['53', landUsePalette[13]],
+                        ['54', landUsePalette[12]],
+                        ['55', landUsePalette[8]],
+                        ['56', landUsePalette[13]],
+                        ['57', landUsePalette[18]],
+                        ['58', landUsePalette[18]],
+                        ['60', landUsePalette[15]],
+                        ['61', landUsePalette[15]],
+                        ['70', landUsePalette[16]],
+                        ['71', landUsePalette[17]],
+                        ['80', landUsePalette[22]],
+                        ['81', landUsePalette[21]],
+                        ['91', landUsePalette[20]],
+                        ['92', landUsePalette[20]],
+                        ['93', landUsePalette[19]],
+                        [null, communityScaleGray]
+                    ]},
+                "fill-outline-color": "white",
+                "fill-opacity": [
+                    "case", ["==", ["get", "USE14_CODE"], null], 0.3,
+                    ["case",
+                    ["boolean", ["feature-state", "hover"], false],
+                    0.95,
+                    0.6
+            ]]
+             },
+             layout: {
+                visibility: "none"
+             }
+        },"road-label", 
+        "settlement-major-label", 
+        "settlement-subdivision-label", 
+        "settlement-minor-label"
+    ) 
+
+    map.addLayer({ 
+            id: "parcels-pctLV",  
+            type: "fill",
+            source: "parcels",
+            paint: {
+                "fill-color": [
+                    "case", ["==", ["get", "pctLV"], null], communityScaleGray,
+                    ["interpolate", 
+                    ["linear"],
+                    ["get", "pctLV"],
+                    0.03,
+                    landValuePalette[4], 
+                    0.15,
+                    landValuePalette[3],
+                    0.35,
+                    landValuePalette[2],
+                    0.65,
+                    landValuePalette[1],
+                    0.90,
+                    landValuePalette[0]]],
+                "fill-outline-color": "#545453",
+                "fill-opacity": [
+                    "case", ["==", ["get", "pctLV"], null], 0.3,
+                    ["case",
+                    ["boolean", ["feature-state", "hover"], false],
+                    0.95,
+                    0.6
+            ]]
+             },
+             layout: {
+                visibility: "none"
+             }
+        },"road-label", 
+        "settlement-major-label", 
+        "settlement-subdivision-label", 
+        "settlement-minor-label"
+    ) 
+
+    map.addLayer({
+            id: "emzb-outline-layer",  
+            type: "line",
+            source: "emzBoundary",
+            paint: {
+                "line-color": communityScaleGray,
+                "line-width": 3,
+                "line-opacity": 1,
+                },
+            layout: {
+                visibility: "visible"
+            }},
+            "road-label", 
+            "settlement-major-label", 
+            "settlement-subdivision-label", 
+            "settlement-minor-label"
+        )
+
+    //defaultView
+    adjustMapSize();
+    });
+
+    window.addEventListener('resize', adjustMapSize);
+
+
+    map.on('click', (e) => {
+        const [selectedTract] = map.queryRenderedFeatures(e.point, {               
+            layers: ["tracts-medIncome"]
+        });
+
+        if (selectedTract) {
+            const medianIncome = selectedTract.properties.medIncome;
+            const displayIncome = medianIncome === null || medianIncome === undefined ? 'No available data' : `Annual median household income: $${medianIncome.toLocaleString()} (2023 USD)`;
+
+            new mapboxgl.Popup({ closeButton: true }, { clickToClose: true })
+            .setLngLat(selectedTract.geometry.coordinates[0][0])
+            .setHTML(`
+                <div class="mapboxgl-popup">
+                <div class="mapboxgl-popup-close-button">x</div>
+                <div class="mapboxgl-popup-header">${selectedTract.properties.NAME}</div>
+                <div class="mapboxgl-popup-content">${displayIncome}
+                </div>
+            </div>`)
+            .addTo(map);
+    }});
+
+    map.on('click', (e) => {
+        const [selectedTract] = map.queryRenderedFeatures(e.point, {               
+            layers: ["tracts-pctChIncome"]
+        });
+
+        if (selectedTract) {
+            const incomeChange = selectedTract.properties.pctChInfIn;
+            const roundedPctIncomeCh = Math.round(incomeChange * 1000) / 10
+            const displayPctIncomeCh = incomeChange === null || incomeChange === undefined ? 'No available data' : `${selectedTract.properties.NAME} saw a ${roundedPctIncomeCh}% change in median annual household income (2015-2023).`;
+            new mapboxgl.Popup({ closeButton: true }, { clickToClose: true })
+            .setLngLat(selectedTract.geometry.coordinates[0][0])
+            .setHTML(`
+                <div class="mapboxgl-popup">
+                <div class="mapboxgl-popup-close-button">x</div>
+                <div class="mapboxgl-popup-header">${selectedTract.properties.NAME}</div>
+                <div class="mapboxgl-popup-content">${displayPctIncomeCh}
+                </div>
+            </div>`)
+            .addTo(map);
+    }});
+
+
+    map.on("click", (e)=> {
+        const [ selectedTract ]= map.queryRenderedFeatures(e.point, {
+            layers: ["tracts-layer"]
+        });
+
+        if (selectedTract) {
+            new mapboxgl.Popup({closeButton: true}, {clickToClose: true})
+            .setLngLat(selectedTract.geometry.coordinates[0][0]) 
+            .setHTML(`<div class="mapboxgl-popup">
+                <div class="mapboxgl-popup-close-button">x</div>
+                <div class="mapboxgl-popup-header">${selectedTract.properties.NAME}</div>
+            </div>`)
+            .addTo(map)
+    }});
+
+
+    map.on('click', (e) => {
+        const [selectedTract] = map.queryRenderedFeatures(e.point, {               
+            layers: ["tracts-pctCostBurdenedRenters"]
+        });
+
+        if (selectedTract) {
+            const pctRent30 = selectedTract.properties.cbRent;
+            const roundedPctRent30 = Math.round(pctRent30 * 1000) / 10
+            const displayPctRent30 = pctRent30 === null || pctRent30 === undefined ? 'No available data' : `${roundedPctRent30}% of renters in ${selectedTract.properties.NAME} spend more than 30% of income on housing costs.`;
+
+            new mapboxgl.Popup({ closeButton: true }, { clickToClose: true })
+            .setLngLat(selectedTract.geometry.coordinates[0][0])
+            .setHTML(`
+                <div class="mapboxgl-popup">
+                <div class="mapboxgl-popup-close-button">x</div>
+                <div class="mapboxgl-popup-header">${selectedTract.properties.NAME}</div>
+                <div class="mapboxgl-popup-content">${displayPctRent30}
+                </div>
+            </div>`)
+            .addTo(map);
+    }});
+
+    map.on('click', (e) => {
+        const [selectedTract] = map.queryRenderedFeatures(e.point, {               
+            layers: ["tracts-pctCostBurdenedOwners"]
+        });
+
+        if (selectedTract) {
+            const pctOwned30 = selectedTract.properties.cbOwn;
+            const roundedPctOwned30 = Math.round(pctOwned30 * 1000) / 10
+            const displayPctOwned30 = pctOwned30 === null || pctOwned30 === undefined ? 'No available data' : `${roundedPctOwned30}% of homeowners in ${selectedTract.properties.NAME} spend more than 30% of income on housing costs.`;
+
+            new mapboxgl.Popup({ closeButton: true }, { clickToClose: true })
+            .setLngLat(selectedTract.geometry.coordinates[0][0])
+            .setHTML(`
+                <div class="mapboxgl-popup">
+                <div class="mapboxgl-popup-close-button">x</div>
+                <div class="mapboxgl-popup-header">${selectedTract.properties.NAME}</div>
+                <div class="mapboxgl-popup-content">${displayPctOwned30}
+                </div>
+            </div>`)
+            .addTo(map);
+    }});
+
+    map.on('click', (e) => {
+        const [selectedTract] = map.queryRenderedFeatures(e.point, {               
+            layers: ["tracts-pctHH"]
+        });
+
+        if (selectedTract) {
+            const pctChangeHH = selectedTract.properties.pctChHH;
+            const roundedPctChangeHH = Math.round(pctChangeHH * 1000) / 10
+            const displayPctChangeHH = pctChangeHH === null || pctChangeHH === undefined ? 'No available data' : `${selectedTract.properties.NAME} saw a ${roundedPctChangeHH}% change in the number of households (2010-2023).`;
+
+            new mapboxgl.Popup({ closeButton: true }, { clickToClose: true })
+            .setLngLat(selectedTract.geometry.coordinates[0][0])
+            .setHTML(`
+                <div class="mapboxgl-popup">
+                <div class="mapboxgl-popup-close-button">x</div>
+                <div class="mapboxgl-popup-header">${selectedTract.properties.NAME}</div>
+                <div class="mapboxgl-popup-content">${displayPctChangeHH}
+                </div>
+            </div>`)
+            .addTo(map);
+    }});
+
+    const dropdown = document.getElementById('layer-dropdown');
+
+    dropdown.addEventListener('change', function() {
+        const selectedLayer = dropdown.value;
+        map.getStyle().layers.forEach(layer => {
+            if (layer.id !== selectedLayer) {
+            map.setLayoutProperty(layer.id, 'visibility', 'none');
+            }});
+
+        map.setLayoutProperty(selectedLayer, 'visibility', 'visible');
+        map.setLayoutProperty("emzb-outline-layer", 'visibility', 'visible');
+        map.setLayoutProperty("road-label", 'visibility', 'visible');
+        map.setLayoutProperty("settlement-major-label", 'visibility', 'visible');
+        map.setLayoutProperty("settlement-subdivision-label", 'visibility', 'visible');
+        map.setLayoutProperty("settlement-minor-label", 'visibility', 'visible');
+    });
+
+    document.getElementById('layer-dropdown').addEventListener('change', function() {
+        var legends = document.querySelectorAll('.legend');
+        legends.forEach(function(legend) {
+        legend.style.display = 'none';
+            });
+
+        var selectedLayer = dropdown.value;
+        if (selectedLayer === 'tracts-medIncome') {
+        document.getElementById('medIncomeLegend').style.display = 'block';
+    }   else if (selectedLayer === 'tracts-pctChIncome') {
+        document.getElementById('pctIncomeChLegend').style.display = 'block';
+        }   else if (selectedLayer === 'tracts-pctCostBurdenedRenters') {
+        document.getElementById('cbRentersLegend').style.display = 'block';
+        }   else if (selectedLayer === 'tracts-pctCostBurdenedOwners') {
+        document.getElementById('cbOwnersLegend').style.display = 'block';
+        }   else if (selectedLayer === 'tracts-pctHH') {
+        document.getElementById('pctHHLegend').style.display = 'block';
+        }   else if (selectedLayer === 'parcels-landuse') {
+        document.getElementById('landUseLegend').style.display = 'block';
+        }   else if (selectedLayer === 'parcels-pctLV') {
+        document.getElementById('pctLVLegend').style.display = 'block';
+        }});
+
+
+
+    let hoveredTractId = null
+
+    map.on('mousemove', 'tracts-medIncome', (e) => {
+            if (e.features.length > 0) {
+                if (hoveredTractId !== null) {
+                    map.setFeatureState(
+                        { source: 'tracts', id: hoveredTractId },
+                        { hover: false }
+                    );
+                }
+                hoveredTractId = e.features[0].id;
+                map.setFeatureState(
+                    { source: 'tracts', id: hoveredTractId },
+                    { hover: true }
+                );
+            }
+        });
+
+        map.on('mouseleave', 'tracts-medIncome', () => {
+            if (hoveredTractId !== null) {
+                map.setFeatureState(
+                    { source: 'tracts', id: hoveredTractId },
+                    { hover: false }
+                );
+            }
+            hoveredTractId = null;
+        });
+
+        map.on('mousemove', 'tracts-pctChIncome', (e) => {
+            if (e.features.length > 0) {
+                if (hoveredTractId !== null) {
+                    map.setFeatureState(
+                        { source: 'tracts', id: hoveredTractId },
+                        { hover: false }
+                    );
+                }
+                hoveredTractId = e.features[0].id;
+                map.setFeatureState(
+                    { source: 'tracts', id: hoveredTractId },
+                    { hover: true }
+                );
+            }
+        });
+
+        map.on('mouseleave', 'tracts-pctChIncome', () => {
+            if (hoveredTractId !== null) {
+                map.setFeatureState(
+                    { source: 'tracts', id: hoveredTractId },
+                    { hover: false }
+                );
+            }
+            hoveredTractId = null;
+        });
+
+
+        map.on('mousemove', 'tracts-pctCostBurdenedRenters', (e) => {
+            if (e.features.length > 0) {
+                if (hoveredTractId !== null) {
+                    map.setFeatureState(
+                        { source: 'tracts', id: hoveredTractId },
+                        { hover: false }
+                    );
+                }
+                hoveredTractId = e.features[0].id;
+                map.setFeatureState(
+                    { source: 'tracts', id: hoveredTractId },
+                    { hover: true }
+                );
+            }
+        });
+
+        map.on('mouseleave', 'tracts-pctCostBurdenedRenters', () => {
+            if (hoveredTractId !== null) {
+                map.setFeatureState(
+                    { source: 'tracts', id: hoveredTractId },
+                    { hover: false }
+                );
+            }
+            hoveredTractId = null;
+        });
+
+
+        map.on('mousemove', 'tracts-pctCostBurdenedOwners', (e) => {
+            if (e.features.length > 0) {
+                if (hoveredTractId !== null) {
+                    map.setFeatureState(
+                        { source: 'tracts', id: hoveredTractId },
+                        { hover: false }
+                    );
+                }
+                hoveredTractId = e.features[0].id;
+                map.setFeatureState(
+                    { source: 'tracts', id: hoveredTractId },
+                    { hover: true }
+                );
+            }
+        });
+
+        map.on('mouseleave', 'tracts-pctCostBurdenedOwners', () => {
+            if (hoveredTractId !== null) {
+                map.setFeatureState(
+                    { source: 'tracts', id: hoveredTractId },
+                    { hover: false }
+                );
+            }
+            hoveredTractId = null;
+        });
+
+
+        map.on('mousemove', 'tracts-pctHH', (e) => {
+            if (e.features.length > 0) {
+                if (hoveredTractId !== null) {
+                    map.setFeatureState(
+                        { source: 'tracts', id: hoveredTractId },
+                        { hover: false }
+                    );
+                }
+                hoveredTractId = e.features[0].id;
+                map.setFeatureState(
+                    { source: 'tracts', id: hoveredTractId },
+                    { hover: true }
+                );
+            }
+        });
+
+        map.on('mouseleave', 'tracts-pctHH', () => {
+            if (hoveredTractId !== null) {
+                map.setFeatureState(
+                    { source: 'tracts', id: hoveredTractId },
+                    { hover: false }
+                );
+            }
+            hoveredTractId = null;
+        });
+        
+
+        map.on('mousemove', 'tracts-layer', (e) => {
+            if (e.features.length > 0) {
+                if (hoveredTractId !== null) {
+                    map.setFeatureState(
+                        { source: 'tracts', id: hoveredTractId },
+                        { hover: false }
+                    );
+                }
+                hoveredTractId = e.features[0].id;
+                map.setFeatureState(
+                    { source: 'tracts', id: hoveredTractId },
+                    { hover: true }
+                );
+            }
+        });
+
+        map.on('mouseleave', 'tracts-layer', () => {
+            if (hoveredTractId !== null) {
+                map.setFeatureState(
+                    { source: 'tracts', id: hoveredTractId },
+                    { hover: false }
+                );
+            }
+            hoveredTractId = null;
+        });
+
+        </script>
+    </body>
+</html>
