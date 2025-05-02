@@ -180,10 +180,10 @@
 </div>
 
 <script>
-    const INITIAL_LOC = [-83.08, 40.03]
+    const INITIAL_LOC = [-95.37, 35.75]
     const INITIAL_ZOOM = 11.9 //set initial zoom (zoom levels 9-12 best for cities depending on size)
     const communityScaleGray = "#425A70"
-    const placeOfInterest = "Upper Arlington"
+    const placeOfInterest = "Muskogee"
     const medIncomePalette = [ //Sequential colorBrewer Purple/Red ramp
                 '#f1eef6',
                 '#d7b5d8',
@@ -243,7 +243,7 @@
         
         map.addSource((placeOfInterest + "-layer"), {    
             type: "geojson",
-            data: "https://raw.githubusercontent.com/emtzot/mapSources/3a42a8dcae81708b41bddbb8527424490e670d8f/ohioPlacesCensus2020.geojson"
+            data: "https://raw.githubusercontent.com/emtzot/mapSources/main/oklahomaCounties.geojson"
         })
 
         map.addLayer({
