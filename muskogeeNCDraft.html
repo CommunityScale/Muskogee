@@ -1,7 +1,7 @@
 <html lang="en">
     <head>
         <meta charset="utf-8" />
-        <title>Muskogee Neighborhood Conditions</title>
+        <title>Muskogee</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
 
 <link
@@ -76,18 +76,121 @@
            position: relative;
         }
 
+        #layer-dropdown {
+            width: auto;
+            font-size: 16px;
+            padding: 8px;
+            margin: 10px 0;
+            z-index: 10;
+            background-color: #f2f0ef;
+            position: absolute;
+            top: 25px;
+            left: 30px;
+            font: 'Roboto', sans-serif;
+            font-size: 14px;
+            display: flex;
+            flex-shrink: 1;
+            border-radius: 2;
+            opacity: 0.95;
+            border: #80808090;
+        }
+
+        .legend {
+            background-color: #fff;
+            border-radius: 4px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            font: 14px/24px 'Roboto', sans-serif;
+            padding: 10px;
+            position: absolute;
+            right: 30px;
+            bottom: 50px;
+            width: 180px;
+            flex-shrink: 1;
+            text-wrap: balance;
+            z-index: 11;
+            line-height: 18px;
+        }
+ 
+        .legend h4 {
+            margin: 0 0 10px;
+            font: 'Roboto', sans-serif;
+        }
+ 
+        .legend div span {
+            display: inline-block;
+            height: 20px;
+            margin-right: 5px;
+            width: 20px;
+            background-color: white;
+            vertical-align: middle;
+            padding-bottom: 0;
+            text-wrap: nowrap;
+        }
+
     </style>
 </head>
 <body>
     <div id="container">
+        <select id="layer-dropdown">
+            <option value="tracts-class-layer">Neighborhood Conditions</option> 
+            <option value="parcels-landuse">Land Use by Parcel</option> 
+            <option value="parcels-pctLV">Land Value as Percent of Assessed Value</option>
+            <option value="parcels-value">Parcel Value Per Square Foot</option>
+        </select>
+        <div id="ncLegend" class="legend" style="display: block">
+            <h4>Neighborhood Conditions Index</h4>
+            <div><img src="https://raw.githubusercontent.com/CommunityScale/Muskogee/main/images/neighborhoodConditionsLegend.png" 
+                alt="Legend for Neighborhood Conditions Index"
+                style="max-width: 100%; height: auto; display: block;" ></div>
+        </div>
+        <div id="landUseLegend" class="legend" style="display: none;"> 
+            <h4>Land Use</h4>
+            <div><span style="background-color: #ffd489"></span>Residential</div>
+            <div><span style="background-color: #da6262"></span>Commercial/industrial</div>
+            <div><span style="background-color: #509040"></span>Agriculture</div>
+            <div><span style="background-color: #425A70"></span>Exempt</div>
+            <div><span style="background-color: #8e8e8e"></span>Unknown</div>
+        </div>
+        <div id="pctLVLegend" class="legend" style="display: none;">
+            <h4>Land Value as Percent of Assessed Value</h4>
+            <div><span style="background-color: #045a8d"></span>3% or less</div>
+            <div><span style="background-color: #2b8cbe"></span></div>
+            <div><span style="background-color: #74a9cf"></span>35%</div>
+            <div><span style="background-color: #bdc9e1"></span></div>
+            <div><span style="background-color: #f1eef6"></span>90% or more</div>
+        </div>
+        <div id="parcelValueLegend" class="legend" style="display: none;">
+            <h4>Assessed Value Per Square Foot</h4>
+            <div><span style="background-color: #f2f0f7"></span>$1 or less</div>
+            <div><span style="background-color: #cbc9e2"></span></div>
+            <div><span style="background-color: #9e9ac8"></span>$4</div>
+            <div><span style="background-color: #756bb1"></span></div>
+            <div><span style="background-color: #54278f"></span>$10 or more</div>
+        </div>
         <div id="map"></div>
 </div>
 
 <script>
     const INITIAL_LOC = [-95.36, 35.70] //capture whole county
-    const INITIAL_ZOOM = 10 //set initial zoom (zoom levels 9-12 best for cities depending on size)
+    const INITIAL_ZOOM = 11 //parcels will not appear at any zoom level lower than 11 (mapbox vector limitation atm)
     const communityScaleGray = "#425A70" //could replace with different accent color, I personally like this branding 
     const placeOfInterest = "Muskogee"
+
+    const landValuePalette = [
+                '#f1eef6',
+                '#bdc9e1',
+                '#74a9cf',
+                '#2b8cbe',
+                '#045a8d'
+            ]
+
+    const sqftValuePalette = [      //colorBrewer purples 
+                '#f2f0f7',
+                '#cbc9e2',
+                '#9e9ac8',
+                '#756bb1',
+                '#54278f'
+            ]
  
 
     mapboxgl.accessToken = 'pk.eyJ1IjoiZW10em90MDEiLCJhIjoiY20zZ2kyd3RpMDRnajJscHoyMG5neGJldyJ9.poXi4pgd2CoXKV2B4kg1Cw ';
@@ -109,6 +212,12 @@
             type: "geojson",
             data: "https://raw.githubusercontent.com/emtzot/mapSources/refs/heads/main/okPlaces.geojson",
             promoteId: "GEOID"
+        })
+
+        map.addSource("parcels", {
+            type: "vector",
+            url: "mapbox://emtzot01.4mycfbpr",
+            promoteId: "id"
         })
 
         map.addLayer({
@@ -139,8 +248,116 @@
             },
             "settlement-major-label", 
             "settlement-subdivision-label", 
-            "settlement-minor-label");
+            "settlement-minor-label")
 
+            map.addLayer({
+                id: "parcels-landuse",
+                type: "fill",
+                source: "parcels",
+                "source-layer": "muskogeeParcels-6ioxn0",
+                paint: {
+                    "fill-color": [
+                        "match",
+                        ["get", "ParcelType"],
+                        "AI", "#509040",
+                        "AV", "#509040",
+                        "CI", "#da6262",
+                        "CV", "#da6262",
+                        "RI", "#ffd489",
+                        "RV", "#ffd489",
+                        "EX", "#425A70",
+                        "#8e8e8e"
+                    ],
+                    "fill-outline-color": communityScaleGray,
+                    "fill-opacity": [
+                        "case",
+                        ["boolean", ["feature-state", "hover"], false],
+                        0.7,
+                        0.5
+                    ]
+                },
+                layout: {
+                    visibility: "none"
+                }
+            }, "settlement-major-label")
+
+            map.addLayer({ 
+            id: "parcels-pctLV",  
+            type: "fill",
+            source: "parcels",
+            "source-layer": "muskogeeParcels-6ioxn0",
+            paint: {
+                "fill-color": [
+                    "case", ["==", ["get", "pctLV"], null], communityScaleGray,
+                    ["interpolate", 
+                    ["linear"],
+                    ["get", "pctLV"],
+                    0.03,
+                    landValuePalette[4], 
+                    0.15,
+                    landValuePalette[3],
+                    0.35,
+                    landValuePalette[2],
+                    0.65,
+                    landValuePalette[1],
+                    0.90,
+                    landValuePalette[0]]],
+                "fill-outline-color": "#545453",
+                "fill-opacity": [
+                    "case", ["==", ["get", "pctLV"], null], 0.3,
+                    ["case",
+                    ["boolean", ["feature-state", "hover"], false],
+                    0.95,
+                    0.6
+            ]]
+             },
+             layout: {
+                visibility: "none"
+             }
+        },"road-label", 
+        "settlement-major-label", 
+        "settlement-subdivision-label", 
+        "settlement-minor-label"
+    )
+    
+    map.addLayer({ 
+            id: "parcels-value", 
+            type: "fill",
+            source: "parcels",
+            "source-layer": "muskogeeParcels-6ioxn0",
+            paint: {
+                "fill-color": [
+                    "case", ["==", ["get", "sqftVal"], null], communityScaleGray,
+                    ["interpolate", 
+                    ["linear"],
+                    ["get", "sqftVal"],
+                    1.0,
+                    sqftValuePalette[0], 
+                    2.50,
+                    sqftValuePalette[1],
+                    4.0,
+                    sqftValuePalette[2],
+                    6.45,
+                    sqftValuePalette[3],
+                    10.0,
+                    sqftValuePalette[4]]],
+                "fill-outline-color": "#545453",
+                "fill-opacity": [
+                    "case", ["==", ["get", "sqftVal"], null], 0.3,
+                    ["case",
+                    ["boolean", ["feature-state", "hover"], false],
+                    0.95,
+                    0.6
+            ]]
+             },
+             layout: {
+                visibility: "none"
+             }
+        },"road-label", 
+        "settlement-major-label", 
+        "settlement-subdivision-label", 
+        "settlement-minor-label"
+    ) 
         
         map.addLayer({
             id: "placeOfInterest-layer",
@@ -160,49 +377,184 @@
             "settlement-minor-label");
     });
 
-    let hoveredPlaceId = null
+    const dataLayers = [
+            'tracts-class-layer',
+            'parcels-landuse',
+            'parcels-pctLV',
+            'parcels-value'
+        ]
 
-    map.on('mousemove', 'tracts-class-layer', (e) => {
+    const dropdown = document.getElementById('layer-dropdown');
+
+dropdown.addEventListener('change', function() {
+    const selectedLayer = dropdown.value;
+    dataLayers.forEach(layerId => {
+        if (layerId !== selectedLayer && map.getLayer(layerId)) {
+        map.setLayoutProperty(layerId, 'visibility', 'none');
+    }
+});
+
+    map.setLayoutProperty(selectedLayer, 'visibility', 'visible');
+    map.setLayoutProperty("placeOfInterest-layer", 'visibility', 'visible');
+    map.setLayoutProperty("road-label", 'visibility', 'visible');
+    map.setLayoutProperty("settlement-major-label", 'visibility', 'visible');
+    map.setLayoutProperty("settlement-subdivision-label", 'visibility', 'visible');
+    map.setLayoutProperty("settlement-minor-label", 'visibility', 'visible');
+});
+
+document.getElementById('layer-dropdown').addEventListener('change', function() {
+    var legends = document.querySelectorAll('.legend');
+    legends.forEach(function(legend) {
+    legend.style.display = 'none';
+        });
+
+    var selectedLayer = dropdown.value;
+    if (selectedLayer === 'tracts-class-layer') {
+    document.getElementById('ncLegend').style.display = 'block';
+    }   else if (selectedLayer === 'parcels-value') {
+    document.getElementById('parcelValueLegend').style.display = 'block';
+    }   else if (selectedLayer === 'parcels-landuse') {
+    document.getElementById('landUseLegend').style.display = 'block';
+    }  else if (selectedLayer === 'parcels-pctLV') {
+    document.getElementById('pctLVLegend').style.display = 'block';
+    }});
+
+
+    map.on('click', (e) => {
+        const [selectedGeo] = map.queryRenderedFeatures(e.point, {         //nc pop up       
+            layers: ["tracts-class-layer"]
+        });
+
+        if (selectedGeo) {
+            const condition = selectedGeo.properties.class;
+            const conditionText = {
+                'DCQ' : `${selectedGeo.properties.NAME} has been a competitve area and is changing quickly.`,
+                'DKU' : `${selectedGeo.properties.NAME} has been a competitive area and is keeping up.`,
+                'DNI' : `${selectedGeo.properties.NAME} has been a competitive area but has not improved over the past five years.`,
+                'OKCQ' : `${selectedGeo.properties.NAME} has been doing alright and is changing quickly.`,
+                'OKKU' : `${selectedGeo.properties.NAME} has been doing alright and is keeping up'`,
+                'OKNI' : `${selectedGeo.properties.NAME} has been doing alright but has not improved over the past five years.`,
+                'HDCQ' : `${selectedGeo.properties.NAME} is a historically disinvested area and is changing quickly`,
+                'HDKU' : `${selectedGeo.properties.NAME} is a historically disinvested area and is keeping up.`,
+                'HDNI' : `${selectedGeo.properties.NAME} is a historically disinvested area and has not improved over the past five years.`
+            };
+
+            const displayCondition = conditionText[condition]|| `No available data.`;
+
+            new mapboxgl.Popup({ closeButton: true }, { clickToClose: true })
+            .setLngLat(selectedGeo.geometry.coordinates[0][0])
+            .setHTML(`
+                <div class="mapboxgl-popup">
+                <div class="mapboxgl-popup-close-button">x</div>
+                <div class="mapboxgl-popup-header">${selectedGeo.properties.NAME}</div>
+                <div class="mapboxgl-popup-content">${displayCondition}
+                </div>
+            </div>`)
+            .addTo(map);
+    }});
+
+    map.on('click', (e) => {
+        const [selectedGeo] = map.queryRenderedFeatures(e.point, {              
+            layers: ["parcels-value"]
+        });
+
+        if (selectedGeo) {
+            const normVal = selectedGeo.properties.sqftVal;
+            const av = selectedGeo.properties.TotalValue;
+            const displayVal = normVal === null || normVal === undefined ? 'No available data.' : `Assessed value per square foot: $${normVal.toLocaleString('en-US')}.`;
+            const displayAV = av === null || av === undefined ? `No available data.` : `Total assessed value: $${av.toLocaleString('en-US')}.`
+            new mapboxgl.Popup({ closeButton: true }, { clickToClose: true })
+            .setLngLat(selectedGeo.geometry.coordinates[0][0])
+            .setHTML(`
+                <div class="mapboxgl-popup">
+                <div class="mapboxgl-popup-close-button">x</div>
+                <div class="mapboxgl-popup-header">${selectedGeo.properties.AdrLabel}</div>
+                <div class="mapboxgl-popup-content">${displayVal}<br>${displayAV}
+                </div>
+            </div>`)
+            .addTo(map);
+    }});
+
+
+    map.on('click', (e) => {
+        const [selectedGeo] = map.queryRenderedFeatures(e.point, {               
+            layers: ["parcels-pctLV"]
+        });
+
+        if (selectedGeo) {
+            const pctLandValue = selectedGeo.properties.pctLV;
+            const roundedPctLV = Math.round(pctLandValue * 1000) / 10
+            const displayPctLV = pctLandValue === null || pctLandValue === undefined ? 'No available data.' : ` Land value accounts for ${roundedPctLV}% of this parcel's total assessed value.`;
+
+            new mapboxgl.Popup({ closeButton: true }, { clickToClose: true })
+            .setLngLat(selectedGeo.geometry.coordinates[0][0])
+            .setHTML(`
+                <div class="mapboxgl-popup">
+                <div class="mapboxgl-popup-close-button">x</div>
+                <div class="mapboxgl-popup-header">${selectedGeo.properties.AdrLabel}</div>
+                <div class="mapboxgl-popup-content">${displayPctLV}
+                </div>
+            </div>`)
+            .addTo(map);
+    }});
+
+    map.on('click', (e) => {
+        const [selectedGeo] = map.queryRenderedFeatures(e.point, {               //pop up for land use
+            layers: ["parcels-landuse"]
+        });
+
+        if (selectedGeo) {
+            const parcelCode = selectedGeo.properties.ParcelType;
+            const displayType = parcelCode === null || parcelCode === undefined ? 'No available data.' : `Parcel type: ${parcelCode}`;
+            new mapboxgl.Popup({ closeButton: true }, { clickToClose: true })
+            .setLngLat(selectedGeo.geometry.coordinates[0][0])
+            .setHTML(`
+                <div class="mapboxgl-popup">
+                <div class="mapboxgl-popup-close-button">x</div>
+                <div class="mapboxgl-popup-header">${selectedGeo.properties.AdrLabel}</div>
+                <div class="mapboxgl-popup-content">${displayType}
+                </div>
+            </div>`)
+            .addTo(map);
+    }});
+
+
+    let hoveredGeoId = null;
+
+    const hoverLayers = [
+        { id: 'tracts-class-layer', source: 'muskogeeTracts'},
+        { id: 'parcels-pctLV', source: 'parcels', "source-layer": "muskogeeParcels-6ioxn0"},
+        { id: 'parcels-landuse', source: 'parcels', "source-layer": "muskogeeParcels-6ioxn0"},
+        { id: 'parcels-value', source: 'parcels', "source-layer": "muskogeeParcels-6ioxn0"},
+    ];
+
+    hoverLayers.forEach(({ id, source }) => {
+        map.on('mousemove', id, (e) => {
             if (e.features.length > 0) {
-                if (hoveredPlaceId !== null) {
+                if (hoveredGeoId !== null) {
                     map.setFeatureState(
-                        { source: 'muskogeeTracts', id: hoveredPlaceId },
+                        { source, id: hoveredGeoId },
                         { hover: false }
                     );
                 }
-                hoveredPlaceId = e.features[0].id;
+                hoveredGeoId = e.features[0].id;
                 map.setFeatureState(
-                    { source: 'muskogeeTracts', id: hoveredPlaceId },
+                    { source, id: hoveredGeoId },
                     { hover: true }
                 );
             }
         });
 
-
-        map.on('mouseleave', 'tracts-class-layer', () => {
-            if (hoveredPlaceId !== null) {
+        map.on('mouseleave', id, () => {
+            if (hoveredGeoId !== null) {
                 map.setFeatureState(
-                    { source: 'muskogeeTracts', id: hoveredPlaceId },
+                    { source, id: hoveredGeoId },
                     { hover: false }
                 );
             }
-            hoveredPlaceId = null;
+            hoveredGeoId = null;
         });
-
-    map.on("click", (e)=> {
-        const [ selectedPlace ]= map.queryRenderedFeatures(e.point, {
-            layers: ["tracts-class-layer"]
-        });
-
-        if (selectedPlace) {
-            new mapboxgl.Popup({closeButton: true}, {clickToClose: true})
-            .setLngLat(selectedPlace.geometry.coordinates[0][0]) 
-            .setHTML(`<div class="mapboxgl-popup">
-                <div class="mapboxgl-popup-close-button">x</div>
-                <div class="mapboxgl-popup-header">${selectedPlace.properties.NAME}</div>
-            </div>`)
-            .addTo(map)
-   }});
+    });
         </script>
     </body>
 </html>
