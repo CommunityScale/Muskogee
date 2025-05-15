@@ -127,6 +127,10 @@
             text-wrap: nowrap;
         }
 
+        #layer-dropdown { top: 25px; }
+        #opacity-control { top: 75px; }
+        #basemap-toggle { top: 125px; }
+
     </style>
 </head>
 <body>
@@ -135,8 +139,19 @@
             <option value="tracts-class-layer">Neighborhood Conditions</option> 
             <option value="parcels-landuse">Land Use by Parcel</option> 
             <option value="parcels-pctLV">Land Value as Percent of Assessed Value</option>
-            <option value="parcels-value">Parcel Value Per Square Foot</option>
+            <option value="parcels-value">Parcel Value Per Arce</option>
         </select>
+        <div id="opacity-control" style="position: absolute; top: 75px; left: 30px; z-index: 10; background: #f2f0ef; padding: 8px; border-radius: 4px; font-family: Roboto, sans-serif; font-size: 14px;">
+            <label for="opacitySlider">Layer Opacity:</label>
+            <input type="range" id="opacitySlider" min="0" max="1" step="0.05" value="0.6">
+        </div>
+        <div id="basemap-toggle" style="position: absolute; top: 120px; left: 30px; z-index: 10; background: #f2f0ef; padding: 8px; border-radius: 4px; font-family: Roboto, sans-serif; font-size: 14px;">
+          <label for="basemapStyle">Basemap:</label>
+          <select id="basemapStyle">
+              <option value="gray">Gray</option>
+              <option value="satellite">Satellite</option>
+          </select>
+      </div>
         <div id="ncLegend" class="legend" style="display: block">
             <h4>Neighborhood Conditions Index</h4>
             <div><img src="https://raw.githubusercontent.com/CommunityScale/Muskogee/main/images/neighborhoodConditionsLegend.png" 
@@ -160,12 +175,12 @@
             <div><span style="background-color: #f1eef6"></span>90% or more</div>
         </div>
         <div id="parcelValueLegend" class="legend" style="display: none;">
-            <h4>Assessed Value Per Square Foot</h4>
-            <div><span style="background-color: #f2f0f7"></span>$1 or less</div>
+            <h4>Assessed Value Per Acre</h4>
+            <div><span style="background-color: #f2f0f7"></span>$5,000 or less</div>
             <div><span style="background-color: #cbc9e2"></span></div>
-            <div><span style="background-color: #9e9ac8"></span>$4</div>
+            <div><span style="background-color: #9e9ac8"></span>$70,000</div>
             <div><span style="background-color: #756bb1"></span></div>
-            <div><span style="background-color: #54278f"></span>$10 or more</div>
+            <div><span style="background-color: #54278f"></span>$280,000 or more</div>
         </div>
         <div id="map"></div>
 </div>
@@ -194,12 +209,19 @@
  
 
     mapboxgl.accessToken = 'pk.eyJ1IjoiZW10em90MDEiLCJhIjoiY20zZ2kyd3RpMDRnajJscHoyMG5neGJldyJ9.poXi4pgd2CoXKV2B4kg1Cw ';
-    const map = new mapboxgl.Map({
-        container: 'map', 
-        style: 'mapbox://styles/emtzot01/cm6a8mjb5004g01qrd7cv07mq', 
-        center: INITIAL_LOC, 
-        zoom: INITIAL_ZOOM 
-    });
+    let map;
+    const BASEMAP_STYLES = {
+      gray: 'mapbox://styles/emtzot01/cm6a8mjb5004g01qrd7cv07mq',
+      satellite: 'mapbox://styles/mapbox/satellite-streets-v12'
+    };
+
+    function initializeMap(styleKey = 'gray') {
+      map = new mapboxgl.Map({
+        container: 'map',
+        style: BASEMAP_STYLES[styleKey],
+        center: INITIAL_LOC,
+        zoom: INITIAL_ZOOM
+      });
 
     map.on("load", () => {      
         map.addSource("muskogeeTracts", {    
@@ -216,7 +238,7 @@
 
         map.addSource("parcels", {
             type: "vector",
-            url: "mapbox://emtzot01.4mycfbpr",
+            url: "mapbox://emtzot01.13b7vjgl",
             promoteId: "id"
         })
 
@@ -254,7 +276,7 @@
                 id: "parcels-landuse",
                 type: "fill",
                 source: "parcels",
-                "source-layer": "muskogeeParcels-6ioxn0",
+                "source-layer": "muskogeeParcels-a9o64b",
                 paint: {
                     "fill-color": [
                         "match",
@@ -285,7 +307,7 @@
             id: "parcels-pctLV",  
             type: "fill",
             source: "parcels",
-            "source-layer": "muskogeeParcels-6ioxn0",
+            "source-layer": "muskogeeParcels-a9o64b",
             paint: {
                 "fill-color": [
                     "case", ["==", ["get", "pctLV"], null], communityScaleGray,
@@ -324,26 +346,26 @@
             id: "parcels-value", 
             type: "fill",
             source: "parcels",
-            "source-layer": "muskogeeParcels-6ioxn0",
+            "source-layer": "muskogeeParcels-a9o64b",
             paint: {
                 "fill-color": [
-                    "case", ["==", ["get", "sqftVal"], null], communityScaleGray,
+                    "case", ["==", ["get", "acreVal"], null], communityScaleGray,
                     ["interpolate", 
                     ["linear"],
-                    ["get", "sqftVal"],
-                    1.0,
+                    ["get", "acreVal"],
+                    5000,
                     sqftValuePalette[0], 
-                    2.50,
+                    45000,
                     sqftValuePalette[1],
-                    4.0,
+                    70000,
                     sqftValuePalette[2],
-                    6.45,
+                    150000,
                     sqftValuePalette[3],
-                    10.0,
+                    280000,
                     sqftValuePalette[4]]],
                 "fill-outline-color": "#545453",
                 "fill-opacity": [
-                    "case", ["==", ["get", "sqftVal"], null], 0.3,
+                    "case", ["==", ["get", "acreVal"], null], 0.3,
                     ["case",
                     ["boolean", ["feature-state", "hover"], false],
                     0.95,
@@ -384,6 +406,14 @@
             'parcels-value'
         ]
 
+
+    document.getElementById("opacitySlider").addEventListener("input", function (e) {
+        const newOpacity = parseFloat(e.target.value);
+        dataLayers.forEach(layerId => {
+        map.setPaintProperty(layerId, "fill-opacity", newOpacity);
+        });
+    });
+
     const dropdown = document.getElementById('layer-dropdown');
 
 dropdown.addEventListener('change', function() {
@@ -418,6 +448,20 @@ document.getElementById('layer-dropdown').addEventListener('change', function() 
     }  else if (selectedLayer === 'parcels-pctLV') {
     document.getElementById('pctLVLegend').style.display = 'block';
     }});
+
+document.getElementById("basemapStyle").addEventListener("change", function (e) {
+    const newStyle = e.target.value;
+    const center = map.getCenter();
+    const zoom = map.getZoom();
+        map.remove();
+        initializeMap(newStyle);
+        setTimeout(() => {
+            map.setCenter(center);
+            map.setZoom(zoom);
+        }, 500);
+    });
+
+    
 
 
     map.on('click', (e) => {
@@ -459,9 +503,9 @@ document.getElementById('layer-dropdown').addEventListener('change', function() 
         });
 
         if (selectedGeo) {
-            const normVal = selectedGeo.properties.sqftVal;
+            const normVal = selectedGeo.properties.acreVal;
             const av = selectedGeo.properties.TotalValue;
-            const displayVal = normVal === null || normVal === undefined ? 'No available data.' : `Assessed value per square foot: $${normVal.toLocaleString('en-US')}.`;
+            const displayVal = normVal === null || normVal === undefined ? 'No available data.' : `Assessed value per acre: $${normVal.toLocaleString('en-US')}.`;
             const displayAV = av === null || av === undefined ? `No available data.` : `Total assessed value: $${av.toLocaleString('en-US')}.`
             new mapboxgl.Popup({ closeButton: true }, { clickToClose: true })
             .setLngLat(selectedGeo.geometry.coordinates[0][0])
@@ -554,7 +598,9 @@ document.getElementById('layer-dropdown').addEventListener('change', function() 
             }
             hoveredGeoId = null;
         });
-    });
+    })};
+
+    initializeMap();
         </script>
     </body>
 </html>
